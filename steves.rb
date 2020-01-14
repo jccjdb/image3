@@ -1,59 +1,40 @@
 class Image
-  attr_accessor :image
-
-  def initialize(image)
-    @image = image
-  end
-
-  def find_ones
-    pixels_to_blur = []
-    @image.each_with_index do |row, row_index|
-      row.each_with_index do |pixel, column_index|
-        if pixel == 1
-          pixels_to_blur << [row_index, column_index]
-        end
-      end
-    end
-    pixels_to_blur
-  end
-
-  def blur_ib2(distance)
-    pixels_to_blur = find_ones
-    @image.each_with_index do |row, row_index|
-      row.each_with_index do |pixel, column_index|
-        pixels_to_blur.each do |row_location, column_location|
-
-          if row_index == row_location && column_index == column_location
-            @image[row_index -1][column_index] = 1 unless row_index == 0 #above
-            @image[row_index +1][column_index] = 1 unless row_index >= @image.size - 1 #below
-            @image[row_index][column_index -1] = 1 unless column_index == 0 #to left
-            @image[row_index][column_index +1] = 1 unless column_index >= row.size - 1 #to right
-          end
-        end
-      end
-    end
-  end
-
-  def blur(distance)
-    pixels_to_blur = find_ones
-    @image.each_with_index do |row, row_index|
-      row.each_with_index do |pixel, column_index|
-        pixels_to_blur.each do |row_location, column_location|
-          pixels_to_change = pixels_within_manhattan_distance_of(distance, row_location, column_location)
-          pixels_to_change.each do |coordinates|
-            x = coordinates.first
-            y = coordinates.last
-            @image[y][x] = 1
-          end
-        end
-      end
-    end
+  def initialize(input_rows)
+    @image = input_rows
   end
 
   def output_image
-    @image.each do |row|
-      puts row.join(", ")
+    for row in @image do
+      output_string = ""
+      for pixel in row do
+        output_string += ' ' unless output_string.length == 0
+        output_string += pixel.to_s
+      end
+      puts output_string
     end
+  end
+
+  def blur(manhattan_distance)
+    pixels_to_blur.each { |coordinates|
+      pixels_within_manhattan_distance_of(manhattan_distance, coordinates.first, coordinates.last).each { |to_blur|
+        # puts("Need to blur pixel at [#{to_blur.first}, #{to_blur.last}]")   # [x, y] coordinates
+        @image[to_blur.first][to_blur.last] = 1   # because in the image, row/y is the first dimension
+      }
+    }
+  end
+
+  def pixels_to_blur
+    retval = []
+    @image.each.with_index { |row, y|
+      row.each.with_index { |pixel, x|
+        retval << [x, y] if pixel == 1
+      }
+    }
+    retval
+  end
+
+  def out_of_bounds?(row_index, column_index)
+    row_index < 0 || row_index >= @image.size || column_index < 0 || column_index >= @image[row_index].size
   end
 
   # Args: manhattan distance with central row and column indices
@@ -83,11 +64,6 @@ class Image
     }
     retval
   end
-
-  def out_of_bounds?(row_index, column_index)
-    row_index < 0 || row_index >= @image.size || column_index < 0 || column_index >= @image[row_index].size
-  end
-
 end
 
 image = Image.new([
@@ -96,9 +72,9 @@ image = Image.new([
   [0, 0, 0, 1],
   [0, 0, 0, 0]
 ])
+
 image.output_image
 image.blur(1)
-
 puts("-------------")
 image.output_image
 puts("==========================  ")
